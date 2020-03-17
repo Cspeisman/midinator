@@ -1,7 +1,6 @@
 // Modules to control application life and create native browser window
 const defaultMenu = require('electron-default-menu')
 const { app, BrowserWindow, ipcMain, Menu, shell, dialog } = require('electron')
-const config = require('./config')
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 

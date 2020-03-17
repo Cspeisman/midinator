@@ -1,4 +1,4 @@
-const { Howl, Howler } = require('howler')
+const { Howl } = require('howler')
 
 const { getProject } = require('./project')
 

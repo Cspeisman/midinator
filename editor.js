@@ -1,5 +1,4 @@
 const fs = require('fs')
-
 const leftpad = require('leftpad')
 const Frame  = require('canvas-to-buffer')
 const rimraf = require('rimraf')
@@ -7,24 +6,24 @@ const ffmpeg = require('fluent-ffmpeg')
 const jsonfile = require('jsonfile')
 const userPrompt = require('electron-osx-prompt')
 
-const { dialog, getCurrentWindow } = require('electron').remote
+const { dialog } = require('electron').remote
 const ipc = require('electron').ipcRenderer
-const win = getCurrentWindow()
 
 const config = require('./config')
 let Programs = require('./src/programs')
 const { renderApp, setPosition } = require('./src/app')
 const { renderColumns, getColumns } = require('./src/columns')
-const { getPlayer, loadMidiPlayer } = require('./src/player')
+const PlayerMod = require('./src/player')
 const { getProject, setProject } = require('./src/project')
-const { getMidiEvent } = require('./src/utils')
 let Audio = require('./src/audio')
+
+const {getPlayer, loadMidiPlayer} = PlayerMod;
+const playerMod = PlayerMod.player;
 
 require('./src/shortcuts')
 
 const columnWidth = config.videoWidth / config.totalColumns
 const progressElem = document.getElementById('progress')
-const timeline = document.getElementById('timeline')
 const canvas = document.createElement('canvas')
 const ctx = canvas.getContext('2d')
 canvas.width = config.videoWidth
@@ -106,12 +105,10 @@ const loadMidiFile = () => {
 
 const play = () => {
   const player = getPlayer()
-  const audio = Audio.getPlayer()
-  if (!player) return
-  if (player.isPlaying()) {
-    player.stop()
-    if (audio) audio.stop()
-    setPosition()
+  if (!player) return;
+
+  if (playerMod.isPlaying()) {
+    playerMod.stop(setPosition)
     const elem = document.getElementById('current-position')
     if (elem && elem.parentNode) elem.parentNode.removeChild(elem)
     return document.querySelector('#play').innerHTML = 'Play'
@@ -120,6 +117,7 @@ const play = () => {
   let currentTick = 0
   const currentPosition = document.createElement('div')
   currentPosition.id = 'current-position'
+
   const animate = () => {
     if (currentPosition.parentNode) currentPosition.parentNode.removeChild(currentPosition)
     const measureLength = player.division * 4
@@ -134,6 +132,7 @@ const play = () => {
 
     const Project = getProject()
     for (let e=0; e < Project.midiEvents.length; e++) {
+
       const midiEvent = Project.midiEvents[e]
 
       if (midiEvent.tick > currentTick) continue
@@ -162,6 +161,7 @@ const play = () => {
     for (let i = 0; i < config.totalColumns; i++) {
       images[i] = ctx.getImageData(i * columnWidth, 0, columnWidth, canvas.height)
     }
+
     ipc.send('render', { images })
     ipc.send('video', { imageData: ctx.getImageData(0, 0, canvas.width, canvas.height) })
 
@@ -171,7 +171,7 @@ const play = () => {
   player.on('playing', (tick) => currentTick = tick.tick)
 
   player.play()
-  if (audio) audio.play()
+  Audio.getPlayer().play()
   document.querySelector('#play').innerHTML = 'Reset'
   setImmediate(animate)
 }

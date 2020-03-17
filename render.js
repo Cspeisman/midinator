@@ -19,9 +19,9 @@ const colDepthCount = 4
 const colSpacing = singleColumnWidth * 10
 const roomWidth = (colSpacing + singleColumnWidth) * colRowCount
 const roomDepth = (colSpacing + singleColumnWidth) * colDepthCount
-const imageColumnWidth = 40
 
 function setup () {
+  console.warn = () => {}
   scene = new THREE.Scene()
   scene.background = new THREE.Color(0xC8C8C8)
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 2, 1000)
@@ -41,23 +41,23 @@ function setup () {
     const xValue = Math.round(x * colSpacing)
     const zValue = Math.round(z * colSpacing)
 
-    materials[i] = new THREE.MeshBasicMaterial({ map: defaultTexture })
-    materials[i].transparent = true
-    const transparentObject = new THREE.Mesh( geometry, [
-      materials[i], // Left side
-      materials[i], // Right side
-      defaultMaterial, // Top side
-      defaultMaterial, // Bottom side
-      materials[i], // Front side
-      materials[i] // Back side
-    ])
-    transparentObject.position.set(xValue, 0, zValue)
-    scene.add(transparentObject)
+    // materials[i] = new THREE.MeshBasicMaterial({ map: defaultTexture })
+    // materials[i].transparent = true
+    // const transparentObject = new THREE.Mesh( geometry, [
+    //   materials[i], // Left side
+    //   materials[i], // Right side
+    //   defaultMaterial, // Top side
+    //   defaultMaterial, // Bottom side
+    //   materials[i], // Front side
+    //   materials[i] // Back side
+    // ])
+    // transparentObject.position.set(xValue, 0, zValue)
+    // scene.add(transparentObject)
 
     const regularObject = new THREE.Mesh( geometry, defaultMaterial)
     regularObject.position.set(xValue, 0, zValue)
     scene.add(regularObject)
-    scene.add(regularObject)
+    // scene.add(regularObject)
   }
 
   document.body.appendChild(renderer.domElement)
@@ -72,13 +72,15 @@ function draw () {
 setup()
 draw()
 
-ipc.on('render', (event, message) => {
+ipc.on('render', (event, {images}) => {
+  console.log(images[0])
   for (let i = 0; i < 16; i++) {
     if (textures[i]) textures[i].dispose()
-    const data = new Uint8ClampedArray(message.images[i].data)
+    const data = new Uint8ClampedArray(images[i].data)
     const imageData = new ImageData(data, 40, config.videoHeight)
     textures[i] = new THREE.Texture(imageData)
     textures[i].needsUpdate = true
-    materials[i].map = textures[i]
+    // materials[i].map = textures[i]
+    defaultMaterial.map = textures[i]
   }
 })

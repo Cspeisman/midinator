@@ -1,4 +1,3 @@
-const eases = require('d3-ease')
 const Pickr = require('@simonwep/pickr')
 const prompt = require('electron-prompt')
 const ipc = require('electron').ipcRenderer
@@ -381,7 +380,6 @@ const drawMeasure = (measureNumber) => {
 const drawNote = (midiEvent) => {
   const player = getPlayer()
   const measureLength = player.division * 4
-
   const elem = document.createElement('div')
   elem.className = 'note'
 
