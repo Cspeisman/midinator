@@ -1,20 +1,20 @@
 const fs = require('fs')
 const leftpad = require('leftpad')
-const Frame  = require('canvas-to-buffer')
+const Frame = require('canvas-to-buffer')
 const rimraf = require('rimraf')
 const ffmpeg = require('fluent-ffmpeg')
 const jsonfile = require('jsonfile')
 const userPrompt = require('electron-osx-prompt')
 
-const { dialog } = require('electron').remote
+const {dialog} = require('electron').remote
 const ipc = require('electron').ipcRenderer
 
 const config = require('./config')
 let Programs = require('./src/programs')
-const { renderApp, setPosition } = require('./src/app')
-const { renderColumns, getColumns } = require('./src/columns')
+const {renderApp} = require('./src/app')
+const {renderColumns, getColumns} = require('./src/columns')
 const PlayerMod = require('./src/player')
-const { getProject, setProject } = require('./src/project')
+const {getProject, setProject} = require('./src/project')
 let Audio = require('./src/audio')
 
 const {getPlayer, loadMidiPlayer} = PlayerMod;
@@ -89,12 +89,12 @@ const loadMidiFile = () => {
     message: 'select a .mid file',
     properties: ['openFile'],
     filters: [
-      { name: 'Midi', extensions: ['mid', 'midi'] }
+      {name: 'Midi', extensions: ['mid', 'midi']}
     ]
-  }, function (files) {
-    if (files !== undefined) {
+  }).then(function ({filePaths}) {
+    if (filePaths !== undefined) {
       const Project = getProject()
-      Project.midiFile = files[0]
+      Project.midiFile = filePaths[0]
       loadMidiPlayer(Project.midiFile)
       const player = getPlayer()
       Project.midiEvents = player.getEvents()[0]
@@ -104,14 +104,15 @@ const loadMidiFile = () => {
 }
 
 const play = () => {
-  const player = getPlayer()
+  const player = playerMod.getPlayer()
   if (!player) return;
 
   if (playerMod.isPlaying()) {
-    playerMod.stop(setPosition)
+    playerMod.stop()
     const elem = document.getElementById('current-position')
     if (elem && elem.parentNode) elem.parentNode.removeChild(elem)
-    return document.querySelector('#play').innerHTML = 'Play'
+    document.querySelector('#play').innerHTML = 'Play'
+    return
   }
 
   let currentTick = 0
@@ -131,7 +132,7 @@ const play = () => {
     canvas.width = canvas.width
 
     const Project = getProject()
-    for (let e=0; e < Project.midiEvents.length; e++) {
+    for (let e = 0; e < Project.midiEvents.length; e++) {
 
       const midiEvent = Project.midiEvents[e]
 
@@ -151,9 +152,9 @@ const play = () => {
           ...program.params
         })
 
-        const columns = getColumns({ delta, ...program.columnParams, ...program.params })
+        const columns = getColumns({delta, ...program.columnParams, ...program.params})
         if (!columns.length) return ctx.drawImage(cnvs, 0, 0)
-        renderColumns({ cnvs, ctx, columns })
+        renderColumns({cnvs, ctx, columns})
       })
     }
 
@@ -162,10 +163,10 @@ const play = () => {
       images[i] = ctx.getImageData(i * columnWidth, 0, columnWidth, canvas.height)
     }
 
-    ipc.send('render', { images })
-    ipc.send('video', { imageData: ctx.getImageData(0, 0, canvas.width, canvas.height) })
+    ipc.send('render', {images})
+    ipc.send('video', {imageData: ctx.getImageData(0, 0, canvas.width, canvas.height)})
 
-    if (player.isPlaying()) setImmediate(animate)
+    if (playerMod.isPlaying()) setImmediate(animate)
   }
 
   player.on('playing', (tick) => currentTick = tick.tick)
@@ -182,7 +183,7 @@ const showExportDialog = () => {
     defaultPath: '~/Downloads/output',
     //message: 'select a .mid file',
     filters: [
-      { name: 'Video', extensions: ['mp4'] }
+      {name: 'Video', extensions: ['mp4']}
     ]
   }, function (file) {
     if (file) exportVideo(file)
@@ -202,7 +203,7 @@ const exportVideo = (outputPath) => {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     const Project = getProject()
-    for (let e=0; e < Project.midiEvents.length; e++) {
+    for (let e = 0; e < Project.midiEvents.length; e++) {
       const midiEvent = Project.midiEvents[e]
 
       if (midiEvent.tick > f) continue
@@ -221,18 +222,18 @@ const exportVideo = (outputPath) => {
           ...program.params
         })
 
-        const columns = getColumns({ delta, ...program.columnParams, ...program.params })
+        const columns = getColumns({delta, ...program.columnParams, ...program.params})
         if (!columns.length) return ctx.drawImage(cnvs, 0, 0)
-        renderColumns({ cnvs, ctx, columns })
+        renderColumns({cnvs, ctx, columns})
       })
     }
 
-    const frame = new Frame(canvas, { quality: 1, image: { types: ['png'] }})
+    const frame = new Frame(canvas, {quality: 1, image: {types: ['png']}})
     fs.writeFileSync('tmp/' + leftpad(f, 5) + '.png', frame.toBuffer())
 
     const player = getPlayer()
     if (f < player.totalTicks) {
-      const percent = `${Math.round(f/player.totalTicks * 100)}`
+      const percent = `${Math.round(f / player.totalTicks * 100)}`
 
       f += 1
       if (progressElem.value != percent) {
@@ -258,38 +259,39 @@ const runFFmpeg = (outputPath) => {
     .outputOptions(['-pix_fmt yuv420p'])
     .outputFps(40)
     .output(outputPath)
-    .on('progress', function(progress) {
+    .on('progress', function (progress) {
       progressElem.value = Math.floor(progress.percent)
     })
-    .on('end', function() {
-      dialog.showMessageBox({ type: 'info', message: 'Export Finished' })
+    .on('end', function () {
+      dialog.showMessageBox({type: 'info', message: 'Export Finished'})
       console.log('Finished processing')
     })
-    .on('error', function(err, stdout, stderr) {
+    .on('error', function (err, stdout, stderr) {
       dialog.showErrorBox(err.message, err)
       console.log('Cannot process video: ' + err.message)
     })
     .run()
 }
 
-const save = () => {
-  dialog.showSaveDialog({
+const save = async () => {
+  const resp = await dialog.showSaveDialog({
     title: 'Save Project File',
     defaultPath: '~/Downloads/light-project',
     filters: [
-      { name: 'JSON', extensions: ['json'] }
+      {name: 'JSON', extensions: ['json']}
     ]
-  }, function (file) {
-    if (file) {
-      const Project = getProject()
-      jsonfile.writeFileSync(file, Project)
-      localStorage.setItem('projectFile', file)
-
-      const projects = localStorage.getItem('projects') || []
-      projects.push(file)
-      localStorage.setItem('projects', projects)
-    }
   })
+
+  const {filePath} = resp
+  if (filePath) {
+    const Project = getProject()
+    jsonfile.writeFileSync(filePath, Project)
+    localStorage.setItem('projectFile', filePath)
+
+    const projects = localStorage.getItem('projects') || []
+    projects.push(filePath)
+    localStorage.setItem('projects', projects)
+  }
 }
 
 const loadJSON = () => {
@@ -298,7 +300,7 @@ const loadJSON = () => {
     message: 'select a .json file',
     properties: ['openFile'],
     filters: [
-      { name: 'JSON', extensions: ['json'] }
+      {name: 'JSON', extensions: ['json']}
     ]
   }, (files) => {
     if (files !== undefined) {
@@ -322,7 +324,7 @@ const showProgramDialog = () => {
     message: 'select a .mov file',
     properties: ['openFile'],
     filters: [
-      { name: 'MOV', extensions: ['mov'] }
+      {name: 'MOV', extensions: ['mov']}
     ]
   }, async (files) => {
     if (files !== undefined) {
@@ -334,22 +336,22 @@ const showProgramDialog = () => {
   })
 }
 
-const loadAudio = () => {
-  dialog.showOpenDialog({
+const loadAudio = async () => {
+  const {filePaths} = await dialog.showOpenDialog({
     title: 'Load Audio File',
     message: 'select an audio file',
     properties: ['openFile'],
     filters: [
-      { name: 'Audio', extensions: ['flac', 'mp3', 'wav'] }
+      {name: 'Audio', extensions: ['flac', 'mp3', 'wav']}
     ]
-  }, async (files) => {
-    if (files !== undefined) {
-      const file = files[0]
-      const Project = getProject()
-      Project.audioFile = file
-      Audio.load(file)
-    }
   })
+
+  if (filePaths !== undefined) {
+    const file = filePaths[0]
+    const Project = getProject()
+    Project.audioFile = file
+    Audio.load(file)
+  }
 }
 
 const setTempo = () => {

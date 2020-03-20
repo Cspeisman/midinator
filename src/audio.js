@@ -1,17 +1,26 @@
 const { Howl } = require('howler')
-
 const { getProject } = require('./project')
-
-let player
+const {player} = require('./player')
+let _player
 
 let getPlayer = () => {
-  return player
+  return _player
+}
+
+const goTo = (second) => _player.seek(second)
+const stop = () => _player.stop();
+
+const AudioPlayer = {
+  goTo,
+  stop
 }
 
 const load = (file) => {
-  player = new Howl({
+  _player = new Howl({
     src: [file]
   })
+
+  player.setAudioPlayer(AudioPlayer)
 }
 
 let Project = getProject()
@@ -20,8 +29,7 @@ if (Project.audioFile) {
   load(Project.audioFile)
 }
 
-
 module.exports = {
   load,
-  getPlayer
+  getPlayer,
 }

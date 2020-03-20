@@ -477,7 +477,6 @@ const loadNote = (event) => {
   drawProgramList({ programs })
 }
 
-
 const renderApp = () => {
   const player = getPlayer()
   timeline.innerHTML = '' //clear timeline
