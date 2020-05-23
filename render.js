@@ -7,7 +7,6 @@ let renderer
 let loader
 let controls
 
-let materials = {}
 let textures = {}
 let defaultTexture = new THREE.Texture()
 let defaultMaterial = new THREE.MeshBasicMaterial({ map: defaultTexture })

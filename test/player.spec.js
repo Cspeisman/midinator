@@ -1,6 +1,24 @@
 const {player} = require('../src/player');
 
+// replaces setImmediate with mock
+jest.useFakeTimers()
+
 describe('player', () => {
+  describe('play', () => {
+    it('should call the midi and audio play function and animator', function () {
+      const play = jest.fn()
+      const animate = jest.fn()
+      player.setAudioPlayer({play})
+      player.setMidiPlayer({play})
+      player.play()
+
+      //invokes animate on the event loop set my setImmediate
+      jest.runAllTimers();
+
+      expect(play).toHaveBeenCalledTimes(2)
+    });
+  });
+
   describe('isPlaying', () => {
     it('should return if player is playing or not', function () {
       player.setMidiPlayer({isPlaying: () => true})

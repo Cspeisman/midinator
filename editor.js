@@ -5,7 +5,6 @@ const rimraf = require('rimraf')
 const ffmpeg = require('fluent-ffmpeg')
 const jsonfile = require('jsonfile')
 const userPrompt = require('electron-osx-prompt')
-
 const {dialog} = require('electron').remote
 const ipc = require('electron').ipcRenderer
 
@@ -19,7 +18,8 @@ let Audio = require('./src/audio')
 
 const {getPlayer, loadMidiPlayer} = PlayerMod;
 const playerMod = PlayerMod.player;
-
+const animator = require('./src/animator');
+animator.setPrograms(Programs);
 require('./src/shortcuts')
 
 const columnWidth = config.videoWidth / config.totalColumns
@@ -132,31 +132,7 @@ const play = () => {
     canvas.width = canvas.width
 
     const Project = getProject()
-    for (let e = 0; e < Project.midiEvents.length; e++) {
-
-      const midiEvent = Project.midiEvents[e]
-
-      if (midiEvent.tick > currentTick) continue
-      if (midiEvent.name !== 'Note on') continue
-      if (!midiEvent.programs.length) continue
-
-      midiEvent.programs.forEach((program) => {
-        const end = program.params.length + midiEvent.tick
-        if (currentTick > end) return
-
-        const delta = currentTick - midiEvent.tick
-        const cnvs = Programs.run(program.name, {
-          canvasHeight: canvas.height,
-          canvasWidth: canvas.width,
-          delta,
-          ...program.params
-        })
-
-        const columns = getColumns({delta, ...program.columnParams, ...program.params})
-        if (!columns.length) return ctx.drawImage(cnvs, 0, 0)
-        renderColumns({cnvs, ctx, columns})
-      })
-    }
+    animator.animate(Project, currentTick, ctx, renderColumns);
 
     let images = {}
     for (let i = 0; i < config.totalColumns; i++) {
@@ -170,9 +146,8 @@ const play = () => {
   }
 
   player.on('playing', (tick) => currentTick = tick.tick)
+  playerMod.play()
 
-  player.play()
-  Audio.getPlayer().play()
   document.querySelector('#play').innerHTML = 'Reset'
   setImmediate(animate)
 }

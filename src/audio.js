@@ -9,8 +9,9 @@ let getPlayer = () => {
 
 const goTo = (second) => _player.seek(second)
 const stop = () => _player.stop();
-
+const play = () => _player.play();
 const AudioPlayer = {
+  play,
   goTo,
   stop
 }

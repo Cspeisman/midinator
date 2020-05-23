@@ -1,5 +1,5 @@
 const MidiPlayerJS = require('midi-player-js')
-const Audio = require('./audio')
+
 let _midiPlayer
 let _audioPlayer
 
@@ -7,12 +7,12 @@ const setMidiPlayer = (player) => {
   _midiPlayer = player
 }
 
-const getPlayer = () => {
-  return _midiPlayer
-}
-
 const setAudioPlayer  = (player) => {
   _audioPlayer = player
+}
+
+const getPlayer = () => {
+  return _midiPlayer
 }
 
 const loadMidiPlayer = (file, onLoaded) => {
@@ -26,6 +26,11 @@ const loadMidiPlayer = (file, onLoaded) => {
 }
 
 const isPlaying = () => _midiPlayer.isPlaying()
+
+const play = () => {
+  _midiPlayer.play()
+  _audioPlayer.play()
+}
 
 const stop = () => {
   _midiPlayer.stop()
@@ -42,12 +47,13 @@ const setPlayerPosition = (measure) => {
 
 const player = {
   getPlayer,
+  play,
   loadMidiPlayer,
   isPlaying,
   stop,
   setMidiPlayer,
   setAudioPlayer,
-  setPlayerPosition
+  setPlayerPosition,
 }
 
 module.exports = {

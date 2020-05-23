@@ -1,5 +1,3 @@
-const ffmpeg = require('fluent-ffmpeg')
-
 const Program = require('../program')
 const progressElem = document.getElementById('progress')
 

@@ -8,22 +8,17 @@ const convertCoordsToColumn = (x, y) => {
 }
 
 const randomWalk = ({ delta, length }) => {
-  const t = delta / length
-
   const totalSteps = config.totalColumns
   const column = Math.round(Math.random() * totalSteps)
   return [column]
 }
 
 const slide = ({ delta, length }) => {
-  const loops = 1
-
   const t = delta / length
   const totalSteps = config.totalColumns / config.columnWidth
   const step = Math.floor(t * totalSteps)
   const base = [1, 2, 3, 4]
-  const columns = base.map(c => (c + (step * totalSteps)))
-  return columns
+  return base.map(c => (c + (step * totalSteps)))
 }
 
 const manual = ({ manualSelections, columns }) => {
