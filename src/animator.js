@@ -29,18 +29,29 @@ const animate = (Project, currentTick, ctx, renderColumns) => {
                 ...program.params
             })
 
-            const columns = getColumns({delta, ...program.columnParams, ...program.params})
-            if (!columns.length) return ctx.drawImage(cnvs, 0, 0)
-            renderColumns({cnvs, ctx, columns})
-        })
-    }
+      const columns = getColumns({delta, ...program.columnParams, ...program.params})
+      let results = [];
+      if (!columns.length) {
+        ctx.drawImage(cnvs, 0, 0)
+      } else {
+        results = renderColumns(columns)
+      }
+
+      results.forEach(result => {
+        ctx.drawImage(
+          cnvs, result.sx, result.sy, result.columnWidth, result.columnHeight,
+          result.dx, result.dy, result.columnWidth, result.columnHeight
+        )
+      });
+    })
+  }
 }
 
 const setPrograms = (Programs) => {
-    _programs = Programs;
+  _programs = Programs;
 }
 
 module.exports = {
-    animate,
-    setPrograms
+  animate,
+  setPrograms
 }

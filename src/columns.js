@@ -41,20 +41,18 @@ const getColumns = ({ type, delta, ...params }) => {
   return columnFn({ delta, ...params })
 }
 
-const renderColumns = ({ cnvs, ctx, columns }) => {
-  const columnWidth = config.videoWidth / config.totalColumns
-  for (let i=0; i < columns.length; i++) {
-    const column = columns[i]
-    const sx = (column * columnWidth) - columnWidth
-    const sy = 0
-    const columnHeight = config.videoHeight
-    const dx = sx
-    const dy = sy
-    ctx.drawImage(
-      cnvs, sx, sy, columnWidth, columnHeight,
-      dx, dy, columnWidth, columnHeight
-    )
-  }
+const renderColumns = (columns) => {
+    const columnWidth = config.videoWidth / config.totalColumns
+    return columns.map((column) => {
+        const sx = (column * columnWidth) - columnWidth
+        const sy = 0
+        const columnHeight = config.videoHeight
+        const dx = sx
+        const dy = sy
+        return {sx, sy, columnWidth, columnHeight,
+            dx, dy
+        }
+    })
 }
 
 const isColumnActive = (columnNumber, params) => {

@@ -1,6 +1,5 @@
 const ipc = require('electron').ipcRenderer
 const config = require('./config')
-
 let scene
 let camera
 let renderer
@@ -72,7 +71,6 @@ setup()
 draw()
 
 ipc.on('render', (event, {images}) => {
-  console.log(images[0])
   for (let i = 0; i < 16; i++) {
     if (textures[i]) textures[i].dispose()
     const data = new Uint8ClampedArray(images[i].data)
