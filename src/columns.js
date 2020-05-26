@@ -7,13 +7,13 @@ const convertCoordsToColumn = (x, y) => {
   return x + (y * row)
 }
 
-const randomWalk = ({ delta, length }) => {
+const randomWalk = ({delta, length}) => {
   const totalSteps = config.totalColumns
   const column = Math.round(Math.random() * totalSteps)
   return [column]
 }
 
-const slide = ({ delta, length }) => {
+const slide = ({delta, length}) => {
   const t = delta / length
   const totalSteps = config.totalColumns / config.columnWidth
   const step = Math.floor(t * totalSteps)
@@ -21,7 +21,7 @@ const slide = ({ delta, length }) => {
   return base.map(c => (c + (step * totalSteps)))
 }
 
-const manual = ({ manualSelections, columns }) => {
+const manual = ({manualSelections, columns}) => {
   const c = manualSelections || columns || {}
   return Object.keys(c).map(c => parseInt(c, 10))
 }
@@ -32,27 +32,38 @@ const columnFns = {
   randomWalk
 }
 
-const getColumns = ({ type, delta, ...params }) => {
+const getColumns = ({type, delta, ...params}) => {
   if (!type) {
-    return manual({ delta, ...params })
+    return manual({delta, ...params})
   }
 
   const columnFn = columnFns[type]
-  return columnFn({ delta, ...params })
+  return columnFn({delta, ...params})
 }
 
 const renderColumns = (columns) => {
-    const columnWidth = config.videoWidth / config.totalColumns
-    return columns.map((column) => {
-        const sx = (column * columnWidth) - columnWidth
-        const sy = 0
-        const columnHeight = config.videoHeight
-        const dx = sx
-        const dy = sy
-        return {sx, sy, columnWidth, columnHeight,
-            dx, dy
-        }
-    })
+  if (!columns.length) {
+    return [{
+      sx: 0,
+      sy: 0,
+      columnWidth: config.videoWidth,
+      columnHeight: config.videoHeight,
+      dx: 0,
+      dy: 0
+    }]
+  }
+  const columnWidth = config.videoWidth / config.totalColumns
+  return columns.map((column) => {
+    const sx = (column * columnWidth) - columnWidth
+    const sy = 0
+    const columnHeight = config.videoHeight
+    const dx = sx
+    const dy = sy
+    return {
+      sx, sy, columnWidth, columnHeight,
+      dx, dy
+    }
+  })
 }
 
 const isColumnActive = (columnNumber, params) => {
@@ -67,11 +78,11 @@ const isColumnActive = (columnNumber, params) => {
      params: {}
    }
 */
-const renderColumnParams = ({ programParamElem, program }) => {
-  let { columnParams } = program
+const renderColumnParams = ({programParamElem, program}) => {
+  let {columnParams} = program
 
   if (!columnParams) {
-    columnParams = program.columnParams = { type: 'manual', manualSelections: {} }
+    columnParams = program.columnParams = {type: 'manual', manualSelections: {}}
   }
 
   if (program.columns) columnParams.manualSelections = program.columns
@@ -91,7 +102,7 @@ const renderColumnParams = ({ programParamElem, program }) => {
 
     const columnInputElems = document.querySelectorAll('.column-container .column')
     columnInputElems.forEach((elem, index) => {
-      const columnActive = isColumnActive((index + 1), { delta, ...program.params, ...columnParams })
+      const columnActive = isColumnActive((index + 1), {delta, ...program.params, ...columnParams})
       if (columnActive)
         elem.classList.add('active')
       else
@@ -101,7 +112,7 @@ const renderColumnParams = ({ programParamElem, program }) => {
 
   window.requestAnimationFrame(animate)
 
-  for (let i=1; i < (config.totalColumns + 1); i++) {
+  for (let i = 1; i < (config.totalColumns + 1); i++) {
     const columnInput = document.createElement('div')
     columnInput.className = 'column'
 
